@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Остатки покраски</title>
+    <style>
+        body {font-family:Arial;margin:0;padding:20px;background:#f4f4f4}
+        table {width:100%;border-collapse:collapse;background:white}
+        th,td {padding:12px;border:1px solid #ddd;text-align:left}
+        th {background:#007bff;color:white}
+        .positive {color:green;font-weight:bold}
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center">Текущие остатки изделий</h1>
+    <table>
+        <tr><th>Изделие</th><th>Готово</th></tr>
+        <% products.forEach(p => { %>
+        <tr><td><%= p.name %></td><td class="positive"><%= p.stock %></td></tr>
+        <% }); %>
+    </table>
+    <p style="text-align:center;margin-top:30px"><a href="/admin">Админ панель</a></p>
+</body>
+</html>
