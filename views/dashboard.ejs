@@ -3,23 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Остатки покраски</title>
+    <title>Админ</title>
     <style>
-        body {font-family:Arial;margin:0;padding:20px;background:#f4f4f4}
-        table {width:100%;border-collapse:collapse;background:white}
-        th,td {padding:12px;border:1px solid #ddd;text-align:left}
-        th {background:#007bff;color:white}
-        .positive {color:green;font-weight:bold}
+        body{font-family:Arial;margin:0;padding:20px;background:#f4f4f4}
+        .container{max-width:900px;margin:auto}
+        form,table{background:white;padding:15px;border-radius:10px;margin-bottom:20px}
+        input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
+        button{background:#28a745;color:white;border:none;cursor:pointer}
+        th,td{padding:10px;border:1px solid #ddd}
     </style>
 </head>
 <body>
-    <h1 style="text-align:center">Текущие остатки изделий</h1>
+<div class="container">
+    <h1>Админ панель</h1>
+    <p style="text-align:center"><a href="/">Просмотр остатков</a> | <a href="/logout">Выход</a></p>
+
+    <h2>Новая операция</h2>
+    <form method="POST" action="/add-operation">
+        <select name="productName" required>
+            <% products.forEach(p => { %>
+                <option value="<%= p.name %>"><%= p.name %></option>
+            <% }); %>
+        </select>
+        <input type="number" name="painted" placeholder="Покрашено" min="0">
+        <input type="number" name="sent" placeholder="Отправлено" min="0">
+        <textarea name="note" placeholder="Примечание"></textarea>
+        <button type="submit">Сохранить</button>
+    </form>
+
+    <h2>Остатки</h2>
     <table>
         <tr><th>Изделие</th><th>Готово</th></tr>
         <% products.forEach(p => { %>
-        <tr><td><%= p.name %></td><td class="positive"><%= p.stock %></td></tr>
+            <tr><td><%= p.name %></td><td><%= p.stock %></td></tr>
         <% }); %>
     </table>
-    <p style="text-align:center;margin-top:30px"><a href="/admin">Админ панель</a></p>
+
+    <h2>История</h2>
+    <table>
+        <tr><th>Дата</th><th>Изделие</th><th>Покрашено</th><th>Отправлено</th><th>Примечание</th></tr>
+        <% operations.forEach(op => { %>
+        <tr>
+            <td><%= op.date %></td>
+            <td><%= op.product %></td>
+            <td><%= op.painted %></td>
+            <td><%= op.sent %></td>
+            <td><%= op.note %></td>
+        </tr>
+        <% }); %>
+    </table>
+</div>
 </body>
 </html>
