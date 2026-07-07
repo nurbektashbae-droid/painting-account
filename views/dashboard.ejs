@@ -15,6 +15,11 @@
 </head>
 <body>
 <div class="container">
+    <h2>Добавить новое изделие</h2>
+<form method="POST" action="/add-product">
+    <input type="text" name="newProduct" placeholder="Название нового изделия" required>
+    <button type="submit">Добавить изделие</button>
+</form>
     <h1>Админ панель</h1>
     <p style="text-align:center"><a href="/">Просмотр остатков</a> | <a href="/logout">Выход</a></p>
 
