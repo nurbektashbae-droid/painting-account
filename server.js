@@ -43,28 +43,18 @@ function loadData() {
   }
 }
 
-function saveProducts() {
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-}
-
-function saveOperations() {
-  fs.writeFileSync(OPERATIONS_FILE, JSON.stringify(operations, null, 2));
-}
+function saveProducts() { fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2)); }
+function saveOperations() { fs.writeFileSync(OPERATIONS_FILE, JSON.stringify(operations, null, 2)); }
 
 loadData();
 
-// Главная страница (публичная)
-app.get('/', (req, res) => {
-  res.render('index', { products });
-});
+// Публичная страница
+app.get('/', (req, res) => res.render('index', { products }));
 
-// Админ вход
+// Админ
 app.get('/admin', (req, res) => {
-  if (req.session.loggedIn) {
-    res.redirect('/dashboard');
-  } else {
-    res.render('login', { error: null });
-  }
+  if (req.session.loggedIn) res.redirect('/dashboard');
+  else res.render('login', { error: null });
 });
 
 app.post('/login', (req, res) => {
@@ -81,6 +71,7 @@ app.get('/dashboard', (req, res) => {
   res.render('dashboard', { products, operations: operations.slice(0, 100) });
 });
 
+// Добавить операцию
 app.post('/add-operation', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
   
@@ -88,11 +79,14 @@ app.post('/add-operation', (req, res) => {
   const paintedNum = parseInt(painted) || 0;
   const sentNum = parseInt(sent) || 0;
   
-  const product = products.find(p => p.name === productName);
-  if (product) {
-    product.stock += paintedNum - sentNum;
-    saveProducts();
+  let product = products.find(p => p.name === productName);
+  if (!product) {
+    product = { name: productName, stock: 0 };
+    products.push(product);
   }
+  
+  product.stock += paintedNum - sentNum;
+  saveProducts();
   
   operations.unshift({
     date: new Date().toLocaleDateString('ru-RU'),
@@ -101,8 +95,18 @@ app.post('/add-operation', (req, res) => {
     sent: sentNum,
     note: note || ''
   });
-  
   saveOperations();
+  res.redirect('/dashboard');
+});
+
+// Добавить новое изделие
+app.post('/add-product', (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/admin');
+  const name = req.body.newProduct.trim();
+  if (name && !products.find(p => p.name === name)) {
+    products.push({ name, stock: 0 });
+    saveProducts();
+  }
   res.redirect('/dashboard');
 });
 
@@ -111,6 +115,4 @@ app.get('/logout', (req, res) => {
   res.redirect('/admin');
 });
 
-app.listen(PORT, () => {
-  console.log(`Сервер работает на порту ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Сервер на ${PORT}`));
