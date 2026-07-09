@@ -11,6 +11,8 @@
         input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
         button{background:#28a745;color:white;border:none;cursor:pointer;font-size:16px}
         button.red{background:#dc3545}
+        .nav {display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+        .nav a, .nav button {padding:10px 15px;background:#007bff;color:white;text-decoration:none;border-radius:8px;border:none;cursor:pointer}
         th,td{padding:12px;border:1px solid #ddd;text-align:left}
         .area {font-size:14px;color:#666}
     </style>
@@ -18,10 +20,12 @@
 <body>
 <div class="container">
     <h1>Админ панель — Учёт покраски</h1>
-    <p style="text-align:center">
-        <a href="/">Просмотр остатков (для всех)</a> | 
+    
+    <div class="nav">
+        <a href="/">👁 Общие остатки (публично)</a>
+        <a href="/dashboard">Панель управления</a>
         <a href="/logout">Выход</a>
-    </p>
+    </div>
 
     <!-- Добавить новое изделие -->
     <h2>Новое изделие</h2>
@@ -41,12 +45,12 @@
             <% }); %>
         </select>
         <input type="number" name="qty" placeholder="Количество (шт)" min="1" required>
-        <textarea name="note" placeholder="Примечание (опционально)"></textarea>
+        <textarea name="note" placeholder="Примечание"></textarea>
         <button type="submit">Покрасить</button>
     </form>
 
     <!-- Отгрузка -->
-    <h2>Отгрузить (крашенные)</h2>
+    <h2>Отгрузить крашенные</h2>
     <form method="POST" action="/send">
         <select name="productName" required>
             <% products.forEach(p => { %>
@@ -58,12 +62,12 @@
         <button type="submit" class="red">Отгрузить</button>
     </form>
 
-    <!-- Текущие остатки -->
-    <h2>Остатки</h2>
+    <!-- Общие остатки -->
+    <h2>Общие остатки</h2>
     <table>
         <tr>
             <th>Изделие</th>
-            <th>Размер (м)</th>
+            <th>Размер</th>
             <th>Не крашенные</th>
             <th>Крашенные</th>
             <th>м² крашенных</th>
@@ -73,7 +77,7 @@
         %>
             <tr>
                 <td><%= p.name %></td>
-                <td><%= (p.length||0) %> × <%= (p.width||0) %></td>
+                <td><%= (p.length||0) %>×<%= (p.width||0) %> м</td>
                 <td><%= p.rawStock || 0 %></td>
                 <td><%= p.paintedStock || 0 %></td>
                 <td><%= area %> м²</td>
@@ -84,11 +88,11 @@
     <!-- История -->
     <h2>История операций</h2>
     <table>
-        <tr><th>Дата</th><th>Тип</th><th>Изделие</th><th>Кол-во</th><th>Площадь</th><th>Примечание</th></tr>
+        <tr><th>Дата</th><th>Тип</th><th>Изделие</th><th>Кол-во</th><th>Площадь м²</th><th>Примечание</th></tr>
         <% operations.forEach(op => { %>
         <tr>
             <td><%= op.date %></td>
-            <td><%= op.type || 'Операция' %></td>
+            <td><%= op.type || '-' %></td>
             <td><%= op.product %></td>
             <td><%= op.qty %></td>
             <td><%= op.area || '-' %></td>
