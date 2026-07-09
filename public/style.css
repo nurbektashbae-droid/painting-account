@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Inter:wght@400;600&display=swap');
+
+* { box-sizing: border-box; }
+body {
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    color: #1e2937;
+}
+
+h1, h2 { color: #0f172a; }
+
+.card, form, table {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+button {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3);
+}
+
+button.red {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.nav a {
+    padding: 12px 22px;
+    background: #1e40af;
+    color: white;
+    text-decoration: none;
+    border-radius: 9999px;
+    font-weight: 500;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #1e40af;
+    color: white;
+    padding: 16px;
+}
+
+td {
+    padding: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
