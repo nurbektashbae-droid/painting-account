@@ -116,5 +116,48 @@ app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/admin');
 });
+// Заявки
+const REQUESTS_FILE = 'requests.json';
+let requests = fs.existsSync(REQUESTS_FILE) ? JSON.parse(fs.readFileSync(REQUESTS_FILE)) : [];
 
+function saveRequests() {
+  fs.writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2));
+}
+
+// Публичная форма заявки
+app.get('/request', (req, res) => {
+  res.render('request');
+});
+
+app.post('/submit-request', (req, res) => {
+  const { productName, qty, customer, phone, dateNeeded, note } = req.body;
+  requests.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleDateString('ru-RU'),
+    product: productName,
+    qty: parseInt(qty),
+    customer: customer || 'Аноним',
+    phone: phone || '',
+    dateNeeded: dateNeeded || '',
+    note: note || '',
+    status: 'Новая'
+  });
+  saveRequests();
+  res.send('<h2>Заявка отправлена! Спасибо.</h2><a href="/">Вернуться</a>');
+});
+
+// В админке
+app.get('/requests', (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/admin');
+  res.render('requests', { requests });
+});
+
+app.post('/update-request', (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/admin');
+  const { id, status } = req.body;
+  const reqItem = requests.find(r => r.id == id);
+  if (reqItem) reqItem.status = status;
+  saveRequests();
+  res.redirect('/requests');
+});
 app.listen(PORT, () => console.log(`Сервер работает`));
