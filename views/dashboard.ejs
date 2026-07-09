@@ -3,103 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ панель</title>
+    <title>Учёт Покраски</title>
     <style>
-        body{font-family:Arial;margin:0;padding:20px;background:#f4f4f4}
-        .container{max-width:1000px;margin:auto}
-        form,table{background:white;padding:20px;border-radius:12px;margin-bottom:25px}
-        input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
-        button{background:#28a745;color:white;border:none;cursor:pointer;font-size:16px}
-        button.red{background:#dc3545}
-        .nav {display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-        .nav a, .nav button {padding:10px 15px;background:#007bff;color:white;text-decoration:none;border-radius:8px;border:none;cursor:pointer}
-        th,td{padding:12px;border:1px solid #ddd;text-align:left}
-        .area {font-size:14px;color:#666}
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { text-align: center; color: #1e3a8a; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 25px; }
+        
+        .nav {
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            justify-content: center; 
+            margin-bottom: 30px;
+        }
+        .nav a {
+            padding: 12px 20px;
+            background: #1e40af;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover { background: #1d4ed8; transform: translateY(-2px); }
+        button.red { background: #dc2626; }
+        button.red:hover { background: #b91c1c; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th { background: #1e40af; color: white; }
+        .area { color: #16a34a; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Админ панель — Учёт покраски</h1>
-    
+    <h1>🛠 Учёт Покраски Изделий</h1>
+    <p class="subtitle">Склад — Онлайн 24/7</p>
+
     <div class="nav">
-        <a href="/">👁 Общие остатки (публично)</a>
-        <a href="/dashboard">Панель управления</a>
-        <a href="/logout">Выход</a>
+        <a href="/">📊 Общие остатки</a>
+        <a href="/dashboard">⚙ Управление</a>
+        <a href="/logout">🚪 Выход</a>
     </div>
 
-    <!-- Добавить новое изделие -->
-    <h2>Новое изделие</h2>
-    <form method="POST" action="/add-product">
-        <input type="text" name="newProduct" placeholder="Название изделия" required>
-        <input type="number" step="0.01" name="length" placeholder="Длина (метры)" required>
-        <input type="number" step="0.01" name="width" placeholder="Ширина (метры)" required>
-        <button type="submit">Добавить изделие</button>
-    </form>
+    <div class="card">
+        <h2>➕ Новое изделие</h2>
+        <form method="POST" action="/add-product">
+            <input type="text" name="newProduct" placeholder="Название изделия (например: Тумба 120х120)" required>
+            <input type="number" step="0.01" name="length" placeholder="Длина (метры)" required>
+            <input type="number" step="0.01" name="width" placeholder="Ширина (метры)" required>
+            <button type="submit">Добавить изделие</button>
+        </form>
+    </div>
 
-    <!-- Покраска -->
-    <h2>Покрасить</h2>
-    <form method="POST" action="/paint">
-        <select name="productName" required>
-            <% products.forEach(p => { %>
-                <option value="<%= p.name %>"><%= p.name %> (<%= (p.length||0) %>×<%= (p.width||0) %> м)</option>
-            <% }); %>
-        </select>
-        <input type="number" name="qty" placeholder="Количество (шт)" min="1" required>
-        <textarea name="note" placeholder="Примечание"></textarea>
-        <button type="submit">Покрасить</button>
-    </form>
+    <div class="card">
+        <h2>🎨 Покращено</h2>
+        <form method="POST" action="/paint">
+            <select name="productName" required>
+                <% products.forEach(p => { %>
+                    <option value="<%= p.name %>"><%= p.name %> (<%= (p.length||0) %>×<%= (p.width||0) %> м)</option>
+                <% }); %>
+            </select>
+            <input type="number" name="qty" placeholder="Сколько покрасить (шт)" min="1" required>
+            <textarea name="note" placeholder="Примечание"></textarea>
+            <button type="submit">Покрасить</button>
+        </form>
+    </div>
 
-    <!-- Отгрузка -->
-    <h2>Отгрузить крашенные</h2>
-    <form method="POST" action="/send">
-        <select name="productName" required>
-            <% products.forEach(p => { %>
-                <option value="<%= p.name %>"><%= p.name %> (крашеных: <%= p.paintedStock || 0 %>)</option>
-            <% }); %>
-        </select>
-        <input type="number" name="qty" placeholder="Количество (шт)" min="1" required>
-        <textarea name="note" placeholder="Примечание"></textarea>
-        <button type="submit" class="red">Отгрузить</button>
-    </form>
+    <div class="card">
+        <h2>📦 Отправлено</h2>
+        <form method="POST" action="/send">
+            <select name="productName" required>
+                <% products.forEach(p => { %>
+                    <option value="<%= p.name %>"><%= p.name %> (Крашеных: <%= p.paintedStock || 0 %>)</option>
+                <% }); %>
+            </select>
+            <input type="number" name="qty" placeholder="Сколько отгрузить (шт)" min="1" required>
+            <textarea name="note" placeholder="Примечание"></textarea>
+            <button type="submit" class="red">Отгрузить</button>
+        </form>
+    </div>
 
-    <!-- Общие остатки -->
-    <h2>Общие остатки</h2>
-    <table>
-        <tr>
-            <th>Изделие</th>
-            <th>Размер</th>
-            <th>Не крашенные</th>
-            <th>Крашенные</th>
-            <th>м² крашенных</th>
-        </tr>
-        <% products.forEach(p => { 
-            const area = ((p.paintedStock || 0) * (p.length||0) * (p.width||0)).toFixed(2);
-        %>
+    <div class="card">
+        <h2>📊 Общие остатки</h2>
+        <table>
             <tr>
-                <td><%= p.name %></td>
-                <td><%= (p.length||0) %>×<%= (p.width||0) %> м</td>
-                <td><%= p.rawStock || 0 %></td>
-                <td><%= p.paintedStock || 0 %></td>
-                <td><%= area %> м²</td>
+                <th>Изделие</th>
+                <th>Размер</th>
+                <th>Не крашен.</th>
+                <th>Крашен.</th>
+                <th>м² крашен.</th>
             </tr>
-        <% }); %>
-    </table>
+            <% products.forEach(p => { 
+                const area = ((p.paintedStock || 0) * (p.length||0) * (p.width||0)).toFixed(1);
+            %>
+                <tr>
+                    <td><strong><%= p.name %></strong></td>
+                    <td><%= (p.length||0) %> × <%= (p.width||0) %> м</td>
+                    <td><%= p.rawStock || 0 %></td>
+                    <td><strong><%= p.paintedStock || 0 %></strong></td>
+                    <td class="area"><%= area %> м²</td>
+                </tr>
+            <% }); %>
+        </table>
+    </div>
 
-    <!-- История -->
-    <h2>История операций</h2>
-    <table>
-        <tr><th>Дата</th><th>Тип</th><th>Изделие</th><th>Кол-во</th><th>Площадь м²</th><th>Примечание</th></tr>
-        <% operations.forEach(op => { %>
-        <tr>
-            <td><%= op.date %></td>
-            <td><%= op.type || '-' %></td>
-            <td><%= op.product %></td>
-            <td><%= op.qty %></td>
-            <td><%= op.area || '-' %></td>
-            <td><%= op.note || '' %></td>
-        </tr>
-        <% }); %>
-    </table>
+    <div class="card">
+        <h2>📜 История </h2>
+        <table>
+            <tr><th>Дата</th><th>Операция</th><th>Изделие</th><th>Кол-во</th><th>м²</th><th>Примеч.</th></tr>
+            <% operations.forEach(op => { %>
+            <tr>
+                <td><%= op.date %></td>
+                <td><%= op.type || '—' %></td>
+                <td><%= op.product %></td>
+                <td><%= op.qty %></td>
+                <td><%= op.area || '—' %></td>
+                <td><%= op.note || '' %></td>
+            </tr>
+            <% }); %>
+        </table>
+    </div>
 </div>
 </body>
 </html>
