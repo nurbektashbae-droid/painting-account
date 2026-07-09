@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,64 +18,76 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// Файлы данных
-const PRODUCTS_FILE = 'products.json';
-const OPERATIONS_FILE = 'operations.json';
-const REQUESTS_FILE = 'requests.json';
+// База данных
+const db = new sqlite3.Database('database.db');
 
-let products = [];
-let operations = [];
-let requests = [];
+// Создание таблиц
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    rawStock INTEGER DEFAULT 0,
+    paintedStock INTEGER DEFAULT 0,
+    length REAL DEFAULT 1,
+    width REAL DEFAULT 1
+  )`);
 
-// Загрузка данных
-function loadData() {
-  if (fs.existsSync(PRODUCTS_FILE)) {
-    products = JSON.parse(fs.readFileSync(PRODUCTS_FILE));
-  } else {
-    products = [
-      { name: "Тумба 3 м", rawStock: 0, paintedStock: 0, length: 3, width: 1 },
-      { name: "ТК 3.5 метр", rawStock: 0, paintedStock: 0, length: 3.5, width: 1 }
-    ];
-    saveProducts();
-  }
-  
-  if (fs.existsSync(OPERATIONS_FILE)) operations = JSON.parse(fs.readFileSync(OPERATIONS_FILE));
-  if (fs.existsSync(REQUESTS_FILE)) requests = JSON.parse(fs.readFileSync(REQUESTS_FILE));
-}
+  db.run(`CREATE TABLE IF NOT EXISTS operations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT,
+    type TEXT,
+    product TEXT,
+    qty INTEGER,
+    area REAL,
+    note TEXT
+  )`);
 
-function saveProducts() { fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2)); }
-function saveOperations() { fs.writeFileSync(OPERATIONS_FILE, JSON.stringify(operations, null, 2)); }
-function saveRequests() { fs.writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2)); }
-
-loadData();
-
-// ====================== РОУТЫ ======================
-
-// Главная (публичная)
-app.get('/', (req, res) => res.render('index', { products }));
-
-// Форма заявки
-app.get('/request', (req, res) => res.render('request', { products }));
-
-// Отправка заявки
-app.post('/submit-request', (req, res) => {
-  const { productName, qty, customer, phone, dateNeeded, note } = req.body;
-  requests.unshift({
-    id: Date.now(),
-    date: new Date().toLocaleDateString('ru-RU'),
-    product: productName,
-    qty: parseInt(qty) || 0,
-    customer: customer || 'Клиент',
-    phone: phone || '',
-    dateNeeded: dateNeeded || '',
-    note: note || '',
-    status: 'Новая'
-  });
-  saveRequests();
-  res.send('<h2 style="text-align:center;color:green;margin-top:50px">✅ Заявка отправлена успешно!</h2><p style="text-align:center"><a href="/">Вернуться к остаткам</a></p>');
+  db.run(`CREATE TABLE IF NOT EXISTS requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT,
+    product TEXT,
+    qty INTEGER,
+    customer TEXT,
+    phone TEXT,
+    dateNeeded TEXT,
+    note TEXT,
+    status TEXT DEFAULT 'Новая'
+  )`);
 });
 
-// Админ вход
+// Инициализация начальных изделий
+db.get("SELECT COUNT(*) as count FROM products", (err, row) => {
+  if (row.count === 0) {
+    db.run("INSERT INTO products (name, length, width) VALUES (?, ?, ?)", ["Тумба 3 м", 3, 1]);
+    db.run("INSERT INTO products (name, length, width) VALUES (?, ?, ?)", ["ТК 3.5 метр", 3.5, 1]);
+  }
+});
+
+// Главная страница
+app.get('/', (req, res) => {
+  db.all("SELECT * FROM products", (err, products) => {
+    res.render('index', { products });
+  });
+});
+
+// Форма заявки
+app.get('/request', (req, res) => {
+  db.all("SELECT * FROM products", (err, products) => {
+    res.render('request', { products });
+  });
+});
+
+app.post('/submit-request', (req, res) => {
+  const { productName, qty, customer, phone, dateNeeded, note } = req.body;
+  db.run(`INSERT INTO requests (date, product, qty, customer, phone, dateNeeded, note) 
+          VALUES (datetime('now'), ?, ?, ?, ?, ?, ?)`,
+    [productName, parseInt(qty), customer, phone, dateNeeded, note],
+    () => {
+      res.send('<h2 style="text-align:center;color:green;margin-top:50px">✅ Заявка отправлена!</h2><p style="text-align:center"><a href="/">Вернуться</a></p>');
+    });
+});
+
+// Админ
 app.get('/admin', (req, res) => {
   if (req.session.loggedIn) res.redirect('/dashboard');
   else res.render('login', { error: null });
@@ -85,15 +97,16 @@ app.post('/login', (req, res) => {
   if (req.body.password === '1727') {
     req.session.loggedIn = true;
     res.redirect('/dashboard');
-  } else {
-    res.render('login', { error: 'Неверный пароль' });
-  }
+  } else res.render('login', { error: 'Неверный пароль' });
 });
 
-// Админ панель
 app.get('/dashboard', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
-  res.render('dashboard', { products, operations: operations.slice(0, 100) });
+  db.all("SELECT * FROM products", (err, products) => {
+    db.all("SELECT * FROM operations ORDER BY id DESC LIMIT 100", (err, operations) => {
+      res.render('dashboard', { products, operations });
+    });
+  });
 });
 
 // Покрасить
@@ -102,48 +115,29 @@ app.post('/paint', (req, res) => {
   const { productName, qty, note } = req.body;
   const qtyNum = parseInt(qty) || 0;
 
-  let product = products.find(p => p.name === productName);
-  if (!product) {
-    product = { name: productName, rawStock: 0, paintedStock: 0, length: 1, width: 1 };
-    products.push(product);
-  }
+  db.get("SELECT * FROM products WHERE name = ?", [productName], (err, product) => {
+    if (product) {
+      db.run("UPDATE products SET rawStock = rawStock - ?, paintedStock = paintedStock + ? WHERE name = ?", 
+        [qtyNum, qtyNum, productName]);
 
-  product.rawStock = (product.rawStock || 0) - qtyNum;
-  product.paintedStock = (product.paintedStock || 0) + qtyNum;
-
-  operations.unshift({
-    date: new Date().toLocaleDateString('ru-RU'),
-    type: 'Покраска',
-    product: productName,
-    qty: qtyNum,
-    area: (qtyNum * (product.length||1) * (product.width||1)).toFixed(1),
-    note: note || ''
+      const area = (qtyNum * product.length * product.width).toFixed(1);
+      db.run("INSERT INTO operations (date, type, product, qty, area, note) VALUES (datetime('now'), 'Покраска', ?, ?, ?, ?)",
+        [productName, qtyNum, area, note]);
+    }
+    res.redirect('/dashboard');
   });
-
-  saveProducts();
-  saveOperations();
-  res.redirect('/dashboard');
 });
 
-// Отгрузка
+// Отгрузить
 app.post('/send', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
   const { productName, qty, note } = req.body;
   const qtyNum = parseInt(qty) || 0;
 
-  const product = products.find(p => p.name === productName);
-  if (product) product.paintedStock = (product.paintedStock || 0) - qtyNum;
+  db.run("UPDATE products SET paintedStock = paintedStock - ? WHERE name = ?", [qtyNum, productName]);
+  db.run("INSERT INTO operations (date, type, product, qty, note) VALUES (datetime('now'), 'Отгрузка', ?, ?, ?)",
+    [productName, qtyNum, note]);
 
-  operations.unshift({
-    date: new Date().toLocaleDateString('ru-RU'),
-    type: 'Отгрузка',
-    product: productName,
-    qty: qtyNum,
-    note: note || ''
-  });
-
-  saveProducts();
-  saveOperations();
   res.redirect('/dashboard');
 });
 
@@ -151,31 +145,23 @@ app.post('/send', (req, res) => {
 app.post('/add-product', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
   const { newProduct, length, width } = req.body;
-  if (newProduct) {
-    products.push({
-      name: newProduct,
-      rawStock: 0,
-      paintedStock: 0,
-      length: parseFloat(length) || 1,
-      width: parseFloat(width) || 1
-    });
-    saveProducts();
-  }
-  res.redirect('/dashboard');
+  db.run("INSERT INTO products (name, length, width) VALUES (?, ?, ?)", 
+    [newProduct, parseFloat(length), parseFloat(width)], 
+    () => res.redirect('/dashboard'));
 });
 
 // Заявки
 app.get('/requests', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
-  res.render('requests', { requests });
+  db.all("SELECT * FROM requests ORDER BY id DESC", (err, requests) => {
+    res.render('requests', { requests });
+  });
 });
 
 app.post('/update-request', (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/admin');
   const { id, status } = req.body;
-  const reqItem = requests.find(r => r.id == id);
-  if (reqItem) reqItem.status = status;
-  saveRequests();
+  db.run("UPDATE requests SET status = ? WHERE id = ?", [status, id]);
   res.redirect('/requests');
 });
 
@@ -184,4 +170,6 @@ app.get('/logout', (req, res) => {
   res.redirect('/admin');
 });
 
-app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Сервер с базой данных запущен на http://localhost:${PORT}`);
+});
