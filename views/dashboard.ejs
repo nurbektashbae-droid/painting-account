@@ -3,57 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ</title>
+    <title>Админ панель</title>
     <style>
         body{font-family:Arial;margin:0;padding:20px;background:#f4f4f4}
-        .container{max-width:900px;margin:auto}
-        form,table{background:white;padding:15px;border-radius:10px;margin-bottom:20px}
-        input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
-        button{background:#28a745;color:white;border:none;cursor:pointer}
-        th,td{padding:10px;border:1px solid #ddd}
+        .container{max-width:1000px;margin:auto}
+        form,table{background:white;padding:20px;border-radius:12px;margin-bottom:25px}
+        input,select,textarea,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+        button{background:#28a745;color:white;border:none;cursor:pointer;font-size:16px}
+        button.red{background:#dc3545}
+        th,td{padding:12px;border:1px solid #ddd;text-align:left}
+        .area {font-size:14px;color:#666}
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>Добавить новое изделие</h2>
-<form method="POST" action="/add-product">
-    <input type="text" name="newProduct" placeholder="Название нового изделия" required>
-    <button type="submit">Добавить изделие</button>
-</form>
-    <h1>Админ панель</h1>
-    <p style="text-align:center"><a href="/">Просмотр остатков</a> | <a href="/logout">Выход</a></p>
+    <h1>Админ панель — Учёт покраски</h1>
+    <p style="text-align:center">
+        <a href="/">Просмотр остатков (для всех)</a> | 
+        <a href="/logout">Выход</a>
+    </p>
 
-    <h2>Новая операция</h2>
-    <form method="POST" action="/add-operation">
-        <select name="productName" required>
-            <% products.forEach(p => { %>
-                <option value="<%= p.name %>"><%= p.name %></option>
-            <% }); %>
-        </select>
-        <input type="number" name="painted" placeholder="Покрашено" min="0">
-        <input type="number" name="sent" placeholder="Отправлено" min="0">
-        <textarea name="note" placeholder="Примечание"></textarea>
-        <button type="submit">Сохранить</button>
+    <!-- Добавить новое изделие -->
+    <h2>Новое изделие</h2>
+    <form method="POST" action="/add-product">
+        <input type="text" name="newProduct" placeholder="Название изделия" required>
+        <input type="number" step="0.01" name="length" placeholder="Длина (метры)" required>
+        <input type="number" step="0.01" name="width" placeholder="Ширина (метры)" required>
+        <button type="submit">Добавить изделие</button>
     </form>
 
+    <!-- Покраска -->
+    <h2>Покрасить</h2>
+    <form method="POST" action="/paint">
+        <select name="productName" required>
+            <% products.forEach(p => { %>
+                <option value="<%= p.name %>"><%= p.name %> (<%= (p.length||0) %>×<%= (p.width||0) %> м)</option>
+            <% }); %>
+        </select>
+        <input type="number" name="qty" placeholder="Количество (шт)" min="1" required>
+        <textarea name="note" placeholder="Примечание (опционально)"></textarea>
+        <button type="submit">Покрасить</button>
+    </form>
+
+    <!-- Отгрузка -->
+    <h2>Отгрузить (крашенные)</h2>
+    <form method="POST" action="/send">
+        <select name="productName" required>
+            <% products.forEach(p => { %>
+                <option value="<%= p.name %>"><%= p.name %> (крашеных: <%= p.paintedStock || 0 %>)</option>
+            <% }); %>
+        </select>
+        <input type="number" name="qty" placeholder="Количество (шт)" min="1" required>
+        <textarea name="note" placeholder="Примечание"></textarea>
+        <button type="submit" class="red">Отгрузить</button>
+    </form>
+
+    <!-- Текущие остатки -->
     <h2>Остатки</h2>
     <table>
-        <tr><th>Изделие</th><th>Готово</th></tr>
-        <% products.forEach(p => { %>
-            <tr><td><%= p.name %></td><td><%= p.stock %></td></tr>
+        <tr>
+            <th>Изделие</th>
+            <th>Размер (м)</th>
+            <th>Не крашенные</th>
+            <th>Крашенные</th>
+            <th>м² крашенных</th>
+        </tr>
+        <% products.forEach(p => { 
+            const area = ((p.paintedStock || 0) * (p.length||0) * (p.width||0)).toFixed(2);
+        %>
+            <tr>
+                <td><%= p.name %></td>
+                <td><%= (p.length||0) %> × <%= (p.width||0) %></td>
+                <td><%= p.rawStock || 0 %></td>
+                <td><%= p.paintedStock || 0 %></td>
+                <td><%= area %> м²</td>
+            </tr>
         <% }); %>
     </table>
 
-    <h2>История</h2>
+    <!-- История -->
+    <h2>История операций</h2>
     <table>
-        <tr><th>Дата</th><th>Изделие</th><th>Покрашено</th><th>Отправлено</th><th>Примечание</th></tr>
+        <tr><th>Дата</th><th>Тип</th><th>Изделие</th><th>Кол-во</th><th>Площадь</th><th>Примечание</th></tr>
         <% operations.forEach(op => { %>
         <tr>
             <td><%= op.date %></td>
+            <td><%= op.type || 'Операция' %></td>
             <td><%= op.product %></td>
-            <td><%= op.painted %></td>
-            <td><%= op.sent %></td>
-            <td><%= op.note %></td>
+            <td><%= op.qty %></td>
+            <td><%= op.area || '-' %></td>
+            <td><%= op.note || '' %></td>
         </tr>
         <% }); %>
     </table>
