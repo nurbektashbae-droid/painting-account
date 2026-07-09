@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявки</title>
+    <style> /* тот же стиль как в dashboard */ </style>
+</head>
+<body>
+<div class="container">
+    <h1>Заявки на заказ</h1>
+    <a href="/dashboard">← Назад</a>
+    <table>
+        <tr><th>Дата</th><th>Клиент</th><th>Изделие</th><th>Кол-во</th><th>Дата нужна</th><th>Статус</th><th>Действие</th></tr>
+        <% requests.forEach(r => { %>
+        <tr>
+            <td><%= r.date %></td>
+            <td><%= r.customer %> <%= r.phone %></td>
+            <td><%= r.product %></td>
+            <td><%= r.qty %></td>
+            <td><%= r.dateNeeded %></td>
+            <td><%= r.status %></td>
+            <td>
+                <form method="POST" action="/update-request" style="display:inline">
+                    <input type="hidden" name="id" value="<%= r.id %>">
+                    <select name="status">
+                        <option value="Новая">Новая</option>
+                        <option value="В работе">В работе</option>
+                        <option value="Готово">Готово</option>
+                        <option value="Выполнено">Выполнено</option>
+                    </select>
+                    <button type="submit">Обновить</button>
+                </form>
+            </td>
+        </tr>
+        <% }); %>
+    </table>
+</div>
+</body>
+</html>
