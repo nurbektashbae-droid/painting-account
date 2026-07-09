@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новая заявка</title>
+    <style>
+        body{font-family:Arial;padding:20px;background:#f0f7ff}
+        .card{background:white;padding:25px;border-radius:16px;max-width:500px;margin:auto;box-shadow:0 10px 20px rgba(0,0,0,0.1)}
+        input,select,textarea{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #ccc}
+        button{background:#2563eb;color:white;padding:14px;border:none;border-radius:8px;font-size:16px}
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Новая заявка на заказ</h1>
+    <form method="POST" action="/submit-request">
+        <select name="productName" required>
+            <% products.forEach(p => { %>
+                <option value="<%= p.name %>"><%= p.name %></option>
+            <% }); %>
+        </select>
+        <input type="number" name="qty" placeholder="Количество" min="1" required>
+        <input type="text" name="customer" placeholder="Ваше имя / Компания">
+        <input type="tel" name="phone" placeholder="Телефон для связи">
+        <input type="date" name="dateNeeded" placeholder="Желаемая дата">
+        <textarea name="note" placeholder="Дополнительные пожелания"></textarea>
+        <button type="submit">Отправить заявку</button>
+    </form>
+    <p><a href="/">← Назад к остаткам</a></p>
+</div>
+</body>
+</html>
